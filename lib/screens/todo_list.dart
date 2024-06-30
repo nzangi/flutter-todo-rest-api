@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:todoapp/screens/add_page.dart';
 import 'package:http/http.dart' as http;
+import '../screens/add_page.dart';
+
 
 class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
@@ -43,6 +45,8 @@ class _TodoListPageState extends State<TodoListPage> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index] as Map;
+                final id = item['_id'] as String;
+                
             return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.blueGrey,
@@ -51,10 +55,19 @@ class _TodoListPageState extends State<TodoListPage> {
                   title: Text(item['title'],style: const TextStyle(color: Colors.black),),
                   subtitle: Text(item['description'],style: const TextStyle(color: Colors.black)),
                   trailing: PopupMenuButton(
+                    onSelected: (value){
+                      if(value == 'edit'){
+                        //perform edit
+                        navigateToEditPage(item);
+                      }else if(value == 'delete'){
+                        //perform delete item
+                        deleteItemById(id);
+                      }
+                    },
                     itemBuilder: (context){
                       return [
-                        PopupMenuItem(child: Text('Edit')),
-                        PopupMenuItem(child: Text('Delete'))
+                        PopupMenuItem(child: Text('Edit'),value: 'edit',),
+                        PopupMenuItem(child: Text('Delete'),value: 'delete')
                       ];
                     },
                   ),
@@ -88,12 +101,30 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   //Move  to AddTodoPage
-  void navigateToAddPage() {
+  Future<void> navigateToAddPage() async{
     final route = MaterialPageRoute(
       builder: (context) => const AddTodoPage(),
     );
-    Navigator.push(context, route);
+    await Navigator.push(context, route);
+    setState(() {
+      isLoading=true;
+    });
+    fetchData();
   }
+
+  //navigate to EditTodoPage
+  Future <void> navigateToEditPage(Map item) async {
+    final route = MaterialPageRoute(
+      builder: (context) => AddTodoPage(todo:item),
+    );
+    await Navigator.push(context, route);
+
+    setState(() {
+      isLoading=true;
+    });
+    fetchData();
+  }
+
 
   Future<void> fetchData() async {
 
@@ -114,5 +145,37 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  
+  Future<void> deleteItemById(String id) async {
+
+    // delete item
+    final url = 'http://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+    final response = await http.delete(uri);
+    if(response.statusCode == 200){
+      final newItemsAfterDeletion = items.where((element) => element['_id'] != id).toList();
+      items = newItemsAfterDeletion;
+      print('TODO $id was deleted');
+      //remove from the list
+    }else{
+      showErrorMessage('Deletion Failed');
+      print('TODO $id was not deleted');
+
+      //show an error
+    }
+
+
+  }
+  void showErrorMessage(String message){
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: const TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.red,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
