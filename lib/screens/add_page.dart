@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:todoapp/services/todo_service.dart';
+
+import '../utils/snakbar_helper.dart';
 
 class AddTodoPage extends StatefulWidget {
   final Map? todo;
@@ -115,91 +117,54 @@ class _AddTodoPageState extends State<AddTodoPage> {
     final id = todo['_id'];
     final isCompleted = todo['is_completed'];
 
-    // get the data from the form to update
-    final title = titleController.text;
-    final description = descriptionController.text;
-
-    final body = {
-      "title": title,
-      "description": description,
-      "is_completed": isCompleted
-    };
-
     // submit the data to server
-    final url = 'http://api.nstack.in/v1/todos/$id';
-    final uri = Uri.parse(url);
-    // http.post(uri);
+    final updateSuccess = await TodoService.updateTodo(id, body);
 
-    final response = await http.put(uri,
-        body: jsonEncode(body), headers: {'Content-Type': 'application/json'
-        });
-    if (response.statusCode == 200){
-      showSuccessMessage('Todo Updated');
+    // show code
+
+    if (updateSuccess){
+      showSuccessMessage(context,message: 'Todo Updated');
     }else{
-      showErrorMessage('Todo Updated');
+      showErrorMessage(context,message: 'Todo Updated');
     }
-
-
-
 
   }
 
     Future<void> submitFormData() async {
-    // get the data from the form
+
+    // submit the data to server
+    final createSuccess = await TodoService.createTodo(body);
+
+    //handle success or error
+    if (createSuccess){
+      print('Creation was success');
+      titleController.text='';
+      descriptionController.text='';
+      showSuccessMessage(context,message: 'Creation was success');
+
+    }else{
+      print('Creation failed');
+      showErrorMessage(context,message: 'Creation failed');
+    }
+
+  }
+
+  Map get body{
+    // get the data from the form to update
+
     final title = titleController.text;
     final description = descriptionController.text;
 
-    final body = {
+    return {
       "title": title,
       "description": description,
       "is_completed": false
     };
-
-    // submit the data to server
-    final url = 'http://api.nstack.in/v1/todos';
-    final uri = Uri.parse(url);
-    // http.post(uri);
-
-    final response = await http.post(uri,
-        body: jsonEncode(body), headers: {'Content-Type': 'application/json'
-    });
-
-    //handle success or error
-    if (response.statusCode == 201){
-      print('Creation was success');
-      titleController.text='';
-      descriptionController.text='';
-      showSuccessMessage('Creation was success');
-
-    }else{
-      print('Creation failed');
-      showErrorMessage('Creation failed');
-    }
-    print(response.statusCode);
-    print(response.body);
-
   }
 
-  void showSuccessMessage(String message) {
-    final snackBar = SnackBar(
-      content: Text(
-        message,
-        style: const TextStyle(color: Colors.white),
-      ),
-      backgroundColor: Colors.blue,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
 
-  void showErrorMessage(String message){
-    final snackBar = SnackBar(
-      content: Text(
-        message,
-        style: const TextStyle(color: Colors.white),
-      ),
-      backgroundColor: Colors.red,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
+
+
+
 
 }
