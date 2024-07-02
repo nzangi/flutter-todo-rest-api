@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todoapp/screens/todo_item_page.dart';
 
 class TodoCard extends StatelessWidget {
   final int index;
@@ -42,6 +43,11 @@ class TodoCard extends StatelessWidget {
             ];
           },
         ),
+        onTap: (){
+          Navigator.push(context,
+                MaterialPageRoute(builder: (context) => NextPage(data: item)));
+        }
+
       ),
     );
     ;

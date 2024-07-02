@@ -137,7 +137,9 @@ class _TodoListPageState extends State<TodoListPage> {
     final isSuccess = await TodoService.deleteItemById(id);
     if(isSuccess){
       final newItemsAfterDeletion = items.where((element) => element['_id'] != id).toList();
-      items = newItemsAfterDeletion;
+      setState(() {
+        items = newItemsAfterDeletion;
+      });
       print('TODO $id was deleted');
       //remove from the list
     }else{
